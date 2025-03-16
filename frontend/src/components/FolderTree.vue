@@ -1,17 +1,13 @@
-<!-- frontend/src/components/FolderTree.vue -->
+<!-- FolderTree.vue -->
 <template>
-  <ul>
-    <li v-for="folder in folders" :key="folder.id">
-      <div class="folder" @click="$emit('folder-click', folder.id)">
-        {{ folder.name }}
-      </div>
-      <FolderTree
-        v-if="folder.children?.length"
-        :folders="folder.children"
-        @folder-click="$emit('folder-click', $event)"
-      />
-    </li>
-  </ul>
+  <v-list-item
+    v-for="folder in folders"
+    :key="folder.id"
+    :value="folder.id"
+    @click="$emit('folder-click', folder.id)"
+  >
+    <v-list-item-title>{{ folder.name }}</v-list-item-title>
+  </v-list-item>
 </template>
 
 <script setup lang="ts">
@@ -20,8 +16,7 @@ import type { PropType } from 'vue';
 interface Folder {
   id: string;
   name: string;
-  parent_id: number | null;
-  children?: Folder[];
+  isHasChildren: boolean;
 }
 
 defineProps({
@@ -29,6 +24,7 @@ defineProps({
 });
 
 defineEmits<{ (e: 'folder-click', id: string): void }>();
+
 </script>
 
 <style scoped>

@@ -1,125 +1,117 @@
 <template>
-  <div class="h-screen flex bg-gray-50">
-    <!-- Left Panel - Folder Structure -->
-    <div class="w-64 border-r border-gray-200 bg-white overflow-y-auto">
-      <div class="p-4 text-sm font-medium text-gray-500 uppercase tracking-wider">
-        Folders
-      </div>
-      <FolderTree
-        :folders="tree"
-        @folder-click="loadChildren"
-        class="px-2"
-      />
-    </div>
+  <v-app>
+    <v-main>
+      <v-container fluid class="pa-0 fill-height">
+        <v-row no-gutters class="fill-height">
+          <!-- Left Panel - Folder Tree -->
+          <v-col cols="3" class="border-e">
+            <v-list density="compact">
+              <v-list-item class="text-caption font-weight-bold text-grey-darken-2">
+                FOLDER STRUCTURE
+              </v-list-item>
+              <FolderTree :folders="tree" @folder-click="loadChildren" />
+            </v-list>
+          </v-col>
 
-    <!-- Right Panel - Contents -->
-    <div class="flex-1 overflow-y-auto p-6">
-      <div class="max-w-4xl mx-auto">
-        <!-- Content List -->
-        <div class="space-y-2">
-          <div
-            v-for="content in contents"
-            :key="content.type + '-' + content.id"
-            class="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
-            :class="{
-              'hover:bg-blue-50': content.type === 'folder',
-              'cursor-pointer': content.type === 'folder'
-            }"
-            @click="content.type === 'folder' ? loadChildren(content.id) : null"
-          >
-            <span class="mr-3">
-              <template v-if="content.type === 'folder'">
-                📁
-              </template>
-              <template v-else>
-                📄
-              </template>
-            </span>
+          <!-- Right Panel - Contents -->
+          <v-col cols="6" class="pa-4">
+            <v-container>
+              <v-row v-if="contents.length > 0">
+                <v-col v-for="content in contents" :key="'content-' + content.id" cols="12">
+                  <v-card variant="outlined" class="pa-2" :class="{ 'clickable': content.type === 'folder' }"
+                    @click="content.type === 'folder' ? loadChildren(content.id) : null">
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon :icon="content.type === 'folder' ? 'mdi-folder' : 'mdi-file'"
+                          :color="content.type === 'folder' ? 'blue' : 'grey-darken-1'"></v-icon>
+                      </template>
+                      <v-list-item-title>{{ content.name }}</v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ formatDate(content.createdAt) }}
+                      </v-list-item-subtitle>
+                    </v-list-item>
+                  </v-card>
+                </v-col>
+              </v-row>
 
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-700">
-                {{ content.name }}
-              </p>
-            </div>
+              <!-- Empty State -->
+              <v-alert v-else type="info" variant="tonal" class="ma-4">
+                This folder is empty
+              </v-alert>
 
-            <span v-if="content.type === 'folder'" class="text-gray-400 text-sm">
-              →
-            </span>
-          </div>
-
-          <div
-            v-if="contents.length === 0"
-            class="text-center py-12 text-gray-500"
-          >
-            This folder is empty
-          </div>
-        </div>
-
-        <!-- File Upload -->
-        <FileUpload
-          :current-folder-id="selectedFolderId"
-          @refresh="loadChildren"
-          class="mt-8 border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-blue-200 transition-colors"
-        />
-      </div>
-    </div>
-  </div>
+              <!-- File Upload -->
+              <FileUpload :current-folder-id="selectedFolderId" @refresh="loadChildren" class="mt-4" />
+            </v-container>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import FolderTree from './components/FolderTree.vue'
-import FileUpload from './components/FileUpload.vue'
+import { ref, onMounted, computed } from 'vue';
+import FolderTree from './components/FolderTree.vue';
+import FileUpload from './components/FileUpload.vue';
+
 
 interface BaseResponse {
-  success:boolean,
-  message:string,
-  data:any
+  success: boolean
+  message: string
+  data: any
 }
 interface Folder {
-  id: string
-  name: string
-  parent_id: number | null
-  children?: Folder[]
+  id: string;
+  name: string;
+  isHasChildren: boolean
 }
-
 interface Content {
-  id: string
-  name: string
-  createdAt :Date
-  type :string
+  id: string;
+  name: string;
+  type: 'folder' | 'file';
+  createdAt: string;
 }
 
-const tree = ref<Folder[]>([])
-const contents=  ref<Content[]>([])
-const selectedFolderId = ref<string | null>(null)
+const tree = ref<Folder[]>([]);
+const contents = ref<Content[]>([]);
+const selectedFolderId = ref<string | null>(null);
 
 onMounted(async () => {
-  const response = await fetch('http://localhost:9000/api/v1/folders')
-  const resData: BaseResponse = await response.json()
-  tree.value = buildTree(resData.data)
-})
+  const response = await fetch('http://localhost:9000/api/v1/folders');
+  const resData: BaseResponse = await response.json();
+  tree.value = resData.data
+});
 
-function buildTree(folders: Folder[]): Folder[] {
-  const map: Record<string, Folder> = {}
-  const tree: Folder[] = []
-  folders.forEach((folder) => {
-    map[folder.id] = { ...folder, children: [] }
-  })
-  folders.forEach((folder) => {
-    const parent = folder.parent_id ? map[folder.parent_id] : null
-    parent ? parent.children?.push(map[folder.id]) : tree.push(map[folder.id])
-  })
-  return tree
-}
 
 async function loadChildren(folderId: string) {
-  selectedFolderId.value = folderId
-  const response = await fetch(`http://localhost:9000/api/v1/folders/${folderId}/contents`)
-  const resData:BaseResponse = await response.json()
+  selectedFolderId.value = folderId;
 
-  contents.value = resData.data
+  try {
+    const response = await fetch(`http://localhost:9000/api/v1/folders/${folderId}/contents`);
+    const resData: BaseResponse = await response.json();
+
+    contents.value = resData.data
+
+    updateBreadcrumbs(folderId);
+  } catch (error) {
+    console.error('Failed to load contents:', error);
+    contents.value = [];
+  }
 }
 
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString();
+}
+
+
+function updateBreadcrumbs(folderId: string) {
+  // Implement your breadcrumb logic here
+  // This should fetch hierarchy from API or maintain a path history
+}
 </script>
 
+<style scoped>
+.border-e {
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+</style>

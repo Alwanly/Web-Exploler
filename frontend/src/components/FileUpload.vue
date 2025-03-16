@@ -1,29 +1,60 @@
-<!-- frontend/src/components/FileUpload.vue -->
 <template>
   <div class="file-upload">
-    <input type="file" @change="handleFileUpload" />
-    <button @click="uploadFile">Upload</button>
+    <v-file-input
+      v-model="selectedFile"
+      label="Select File"
+      prepend-icon="mdi-paperclip"
+      accept="*"
+      @change="handleFileInputChange"
+      class="mb-4"
+    ></v-file-input>
+
+    <v-btn
+      color="primary"
+      :disabled="!selectedFile || !currentFolderId"
+      @click="uploadFile"
+      prepend-icon="mdi-upload"
+    >
+      Upload
+    </v-btn>
+
+    <v-snackbar
+      v-model="showSnackbar"
+      :color="snackbarColor"
+      timeout="2000"
+    >
+      {{ snackbarMessage }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { VFileInput, VBtn, VSnackbar } from 'vuetify/components';
 
-// Add emit definition 👇
 const emit = defineEmits<{
   (e: 'refresh', folderId: string): void
 }>();
 
-const props = defineProps<{ currentFolderId: string | null }>();
-const selectedFile = ref<File | null>(null);
+const props = defineProps<{
+  currentFolderId: string | null
+}>();
 
-const handleFileUpload = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (input.files?.[0]) {
-    selectedFile.value = input.files[0];
+// Reactive state
+const selectedFile = ref<File | null>(null);
+const showSnackbar = ref(false);
+const snackbarMessage = ref('');
+const snackbarColor = ref(''); // Can be 'success' or 'error'
+
+// Handle file input change
+const handleFileInputChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files[0]) {
+    selectedFile.value = target.files[0];
   }
 };
 
+// Upload file
 const uploadFile = async () => {
   if (!selectedFile.value || !props.currentFolderId) return;
 
@@ -38,18 +69,20 @@ const uploadFile = async () => {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`Upload failed: ${response.statusText}`);
     }
 
-    // Clear file selection after upload
-    selectedFile.value = null;
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (input) input.value = '';
-
+    // Success feedback
+    snackbarMessage.value = 'File uploaded successfully!';
+    snackbarColor.value = 'success';
     emit('refresh', props.currentFolderId);
+    selectedFile.value = null;
   } catch (error) {
-    console.error('Upload failed:', error);
-    alert('File upload failed. Please try again.');
+    console.error('Upload error:', error);
+    snackbarMessage.value = error instanceof Error ? error.message : 'Upload failed';
+    snackbarColor.value = 'error';
+  } finally {
+    showSnackbar.value = true;
   }
 };
 </script>

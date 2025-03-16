@@ -1,15 +1,14 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-
+import { createVuetify } from 'vuetify'
 import App from './App.vue'
-import './assets/tailwind.css'
-import router from './router'
+import * as components from 'vuetify/components'
+import * as labs from 'vuetify/labs/components'
 
-const app = createApp(App)
+const vuetify = createVuetify({
+  components: {
+    ...components,
+    ...labs,
+  },
+})
 
-app.use(createPinia())
-app.use(router)
-
-app.mount('#app')
+createApp(App).use(vuetify).mount('#app')
