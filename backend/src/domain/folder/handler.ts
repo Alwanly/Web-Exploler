@@ -13,7 +13,7 @@ export const FolderManagementController = (service: ServiceProvider) => {
   const repository = new Repository(service.DB);
   const usecase = new UseCase(repository);
 
-  return new Elysia().group("/folder", (app) =>
+  return new Elysia().group("/folders", (app) =>
     app
       .post(
         "",
@@ -43,7 +43,7 @@ export const FolderManagementController = (service: ServiceProvider) => {
         },
       )
       .get(
-        "/:id/content",
+        "/:id/contents",
         async ({ params, set }) => {
           const { statusCode, ...response } = await usecase.content(params);
           set.status = statusCode;

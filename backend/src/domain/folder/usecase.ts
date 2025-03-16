@@ -27,7 +27,6 @@ export class UseCase {
   async create(
     request: dto.CreateFolderRequest,
   ): Promise<dto.BaseCreateFolderResponse> {
-    console.table(request);
     const folder = new Folder();
     folder.name = request.name;
     if (request.id != null) {

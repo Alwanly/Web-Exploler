@@ -8,7 +8,7 @@ export const FileManagementController = (service: ServiceProvider) => {
   const repository = new Repository(service.DB);
   const usecase = new UseCase(repository);
 
-  return new Elysia().group("/file", (app) =>
+  return new Elysia().group("/files", (app) =>
     app.post(
       "",
       async ({ body, set }) => {

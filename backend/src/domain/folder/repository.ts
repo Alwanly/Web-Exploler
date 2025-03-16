@@ -31,7 +31,6 @@ export class Repository {
       ])
       .groupBy("folder.id") // Group results by folder to avoid duplicates
       .getRawMany();
-    console.table(folders);
     return folders.map((folder) => ({
       id: folder.folder_id,
       name: folder.folder_name,
@@ -57,7 +56,6 @@ export class Repository {
       ])
       .groupBy("folder.id") // Group results by folder to avoid duplicates
       .getRawMany();
-    console.table(folders);
     return folders.map((folder) => ({
       id: folder.folder_id,
       name: folder.folder_name,
