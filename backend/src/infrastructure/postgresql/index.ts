@@ -3,6 +3,8 @@ import { logger } from "@infrastructure";
 
 import Config from "@config";
 import { User } from "@domain/auth";
+import { Folder } from "@domain/folder";
+import { File } from "@domain/file";
 
 const context = "PostgresSQL";
 let DB: DataSource;
@@ -18,7 +20,7 @@ export async function initialize(): Promise<void> {
     password: Config.postgresql.password,
     database: Config.postgresql.database,
     synchronize: false,
-    entities: [User],
+    entities: [User, Folder, File],
     migrations: [],
     subscribers: [],
   });

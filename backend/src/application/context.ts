@@ -1,10 +1,11 @@
 // src/application/context.ts
 import { ServiceProvider } from "@infrastructure/services";
 import { logger } from "@infrastructure";
-import { AuthController } from "@domain/auth/handler";
+import { FolderManagementController } from "@domain/folder/handler";
 import Config from "@config";
 import Elysia from "elysia";
 import { cors } from "@elysiajs/cors";
+import { FileManagementController } from "@domain/file/handler";
 
 const context = "Application";
 // src/application/context.ts
@@ -60,7 +61,9 @@ export class ApplicationContext {
   }
 
   private registerFeatureModules(): Elysia {
-    return new Elysia().use(AuthController(this._services.DB));
+    return new Elysia()
+      .use(FolderManagementController(this._services))
+      .use(FileManagementController(this._services));
   }
 
   private registerCoreModules(): Elysia {
